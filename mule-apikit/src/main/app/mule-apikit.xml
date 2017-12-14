@@ -1,7 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.9.0"
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
-http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+    <http:listener-config name="APIKIT_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <apikit:config name="exercise-apikit" raml="exercise-apikit.raml" consoleEnabled="true" consolePath="console" keepRamlBaseUri="false" doc:name="Router"/>
+    <spring:beans>
+        <spring:bean id="Bean" name="books" class="java.util.HashMap"/>
+    </spring:beans>
+    <flow name="main-apikitFlow">
+        <http:listener config-ref="APIKIT_Listener_Configuration" path="/api/*" doc:name="HTTP"/>
+        <apikit:router config-ref="exercise-apikit" doc:name="APIkit Router"/>
+    </flow>
+    <flow name="console-apikitFlow">
+        <http:listener config-ref="APIKIT_Listener_Configuration" path="/console/*" doc:name="HTTP"/>
+        <apikit:console config-ref="exercise-apikit" doc:name="APIkit Console"/>
+    </flow>
+    <flow name="get:/books:exercise-apikit">
+        <set-payload value="#[app.registry['books']]" doc:name="Set Payload"/>
+        <dw:transform-message doc:name="Transform Message" metadata:id="572c7ec0-c6ab-4a4c-a784-1ccbf3685361">
+            <dw:input-payload mimeType="application/java"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+payload map ((payload01 , indexOfPayload01) -> {
+	ID: payload01.id,
+	title: payload01.title,
+	author: payload01.author,
+	pages: payload01.pages
+})]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="getAllBooks by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
+        <set-payload value="All: #[payload]" doc:name="Set Payload"/>
+    </flow>
+</mule>

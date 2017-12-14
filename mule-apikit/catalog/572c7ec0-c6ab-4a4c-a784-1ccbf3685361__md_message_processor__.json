@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "listBook"
+        }
+    },
+    "outputMessageMetadata": {},
+    "id": "572c7ec0-c6ab-4a4c-a784-1ccbf3685361",
+    "version": "5.2.0.0"
+}
