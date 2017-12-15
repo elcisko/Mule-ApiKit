@@ -1,11 +1,12 @@
-#%RAML 0.8
-title: Exercise API KIT
-version: 01
+#%RAML 1.0
+baseUri: https://mocksvc.mulesoft.com/mocks/9c132ff6-bd31-4699-a74f-fdc28f3e5a36 # 
+title: MuleApplicationExerciseBooks
+version: 1.0
 
 schemas:
-  - book: |
-      {
-        "properties": {
+  -book: |
+    {
+      "properties": {
           "ID": {
             "description": "Book ID",
             "type": "number",
@@ -21,89 +22,134 @@ schemas:
             "type": "string",
             "required": true
           },
-          "origin": {
-            "pages": "number pages",
+          "pages": {
+            "description": "number pages",
             "type": "number",
             "required": true
           }
         }
-      }
-  - books: |
-      [{
-        "properties": {
-          "ID": {
-            "description": "Book ID",
-            "type": "number",
-            "required": true
-          },
-          "title": {
-            "description": "book's title",
-            "type": "string",
-            "required": true
-          },
-          "author": {
-            "description": "book's uthor",
-            "type": "string",
-            "required": true
-          },
-          "origin": {
-            "pages": "number pages",
-            "type": "number",
-            "required": true
-          }
-        }
-      }]
-    
-    
+    }
+
 /books:
-  get:
-    responses:
-      200:
-        body:
-          application/json:
-            example: |
-              [{"ID":1, "title": "book1","author": "author1", "pages": 12},{"ID":2, "title": "book2","author": "author2", "pages": 45},{"ID":1, "title": "book3","author": "author3", "pages": 25}]
-  put:
-    body:
-      application/json:  
-        example: |
-          {"title": "book1","author": "author1", "pages": 12}
-
-    responses:
-      201:
-        body:
-          application/json:
-            example: |
-              {"message": "Book added"}
-
-  post:
-    body:
-      application/json:
-        schema: book 
-        example: |
-          {"ID":3, "title": "book55","author": "author77", "pages": 33}
-
-    responses:
-      201:
-        body:
-          application/json:
-            example: |
-              {"message": "Book updated"}
-              
-  /{NAME}:
+    description: methods for management books
     get:
+      description: Retrieve all books
+      headers: 
+        User-Agent: 
+          required: true
       responses:
         200:
           body:
             application/json:
               example: |
-                {"ID":2, "title": "book2","author": "author2", "pages": 45}
+                [
+                  {
+                    "ID": 1, 
+                    "title": "book1",
+                    "author": "author1", 
+                    "pages": 12
+                  },
+                  {
+                    "ID": 2, 
+                    "title": "book2",
+                    "author": "author2", 
+                    "pages": 45
+                  },
+                  {
+                    "ID": 1, 
+                    "title": "book3",
+                    "author": "author3", 
+                    "pages": 25
+                  }
+                ]
+    put:
+      description: Create a new book
+      headers: 
+        User-Agent: 
+          required: true
+      body:
+        application/json:  
+          example: |
+            {
+              "title": "book1",
+              "author": "author1", 
+              "pages": 12
+            }
   
-  /{ID}:
-    delete:
       responses:
-        200:
+        201:
           body:
             application/json:
               example: |
-                {"message": "Book deleted"} 
+                {
+                  "message": "book created with id: 5"
+                }
+    post:
+      description: Update a new book
+      headers: 
+        User-Agent: 
+          required: true
+      body:
+        application/json:
+          #schema: -book 
+          example: |
+            {
+              "ID": 3, 
+              "title": "book2",
+              "author": "author2", 
+              "pages": 45              
+            }
+  
+      responses:
+        201:
+          body:
+            application/json:
+              example: |
+                {
+                  "message": "book update with id: 3"
+                }
+
+    /book/{ID}:
+      description: methods for book management and that required parameter "ID"
+      uriParameters: 
+          ID:
+            displayName: book_id
+            type: number
+            required: true
+      delete:
+          description: Delete a book by ID
+          headers: 
+            User-Agent: 
+              required: true    
+          responses:
+            200:
+              body:
+                application/json:
+                  example: |
+                    { 
+                      "message": "Book with ID: 4 removed"
+                    }
+    /search/{NAME}:
+      description: method for search book by name
+      uriParameters: 
+          NAME: 
+            displayName: title_book
+            type: string
+            required: true
+      get:
+          description:  
+          headers: 
+            User-Agent:
+              required: true
+          responses: 
+            200:
+              body: 
+                application/json:
+                  #schema: -book
+                  example: |
+                    {
+                      "ID": 2, 
+                      "title": "book2",
+                      "author": "author2", 
+                      "pages": 45
+                    }

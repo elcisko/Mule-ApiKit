@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
@@ -8,21 +8,22 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
-http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
     <http:listener-config name="APIKIT_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
-    <apikit:config name="exercise-apikit" raml="exercise-apikit.raml" consoleEnabled="true" consolePath="console" keepRamlBaseUri="false" doc:name="Router"/>
+    <apikit:config name="apikit-config" raml="exercise-apikit.raml" consoleEnabled="true" consolePath="console" keepRamlBaseUri="false" doc:name="Router"/>
     <spring:beans>
         <spring:bean id="Bean" name="books" class="java.util.HashMap"/>
     </spring:beans>
     <flow name="main-apikitFlow">
         <http:listener config-ref="APIKIT_Listener_Configuration" path="/api/*" doc:name="HTTP"/>
-        <apikit:router config-ref="exercise-apikit" doc:name="APIkit Router"/>
+        <apikit:router config-ref="apikit-config" doc:name="APIkit Router"/>
     </flow>
     <flow name="console-apikitFlow">
         <http:listener config-ref="APIKIT_Listener_Configuration" path="/console/*" doc:name="HTTP"/>
-        <apikit:console config-ref="exercise-apikit" doc:name="APIkit Console"/>
+        <apikit:console config-ref="apikit-config" doc:name="APIkit Console"/>
     </flow>
-    <flow name="get:/books:exercise-apikit">
+    <flow name="get:/books:apikit-config">
         <set-payload value="#[app.registry['books']]" doc:name="Set Payload"/>
         <dw:transform-message doc:name="Transform Message" metadata:id="572c7ec0-c6ab-4a4c-a784-1ccbf3685361">
             <dw:input-payload mimeType="application/java"/>
@@ -38,5 +39,86 @@ payload map ((payload01 , indexOfPayload01) -> {
         </dw:transform-message>
         <logger message="getAllBooks by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
         <set-payload value="All: #[payload]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="put:/books:apikit-config">
+        <dw:transform-message doc:name="Transform Message" metadata:id="36294aa0-1c7c-4e7a-b56c-d0b2d93ddab6">
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	title: payload.title,
+	author: payload.author,
+	pages: payload.pages as :number
+} as :object {
+	class : "com.mule.support.Book"
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <expression-component doc:name="Expression"><![CDATA[app.registry['books'].put(payload.getId(),payload);]]></expression-component>
+        <logger message="created new book with ID: #[payload.getId()] by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
+        <set-payload value="{ message: book created with id: #[payload.id]}" doc:name="Set Payload"/>
+    </flow>
+    <flow name="post:/books:apikit-config">
+        <dw:transform-message doc:name="Transform Message" metadata:id="be9f3fc1-ee26-4831-8d56-c6773e5e7d94">
+            <dw:input-payload mimeType="application/json"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+{
+	author: payload.author,
+	id: payload.ID,
+	pages: payload.pages,
+	title: payload.title
+} as :object {
+	class : "com.mule.support.Book"
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <set-variable variableName="updateId" value="#[payload.getId()]" doc:name="Variable"/>
+        <choice doc:name="ExistBook">
+            <when expression="#[app.registry['books'].containsKey(flowVars.updateId)]">
+                <expression-component doc:name="Expression"><![CDATA[app.registry['books'].put(payload.getId(),payload);]]></expression-component>
+                <set-variable variableName="updateBook" value="{ message: book update with id: #[payload.id]}" doc:name="update"/>
+                <logger message="updated book with ID: #[flowVars.updateId]  by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="updateBook" value="{ message: book with ID: #[flowVars.updateId] not exist for update}" doc:name="Not Found"/>
+                <logger message="fail attempt to update book with ID: #[flowVars.updateId]  by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+        <set-payload value="#[flowVars.updateBook]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="delete:/books/book/{ID}:apikit-config">
+        <logger message="#[message.inboundProperties.'http.uri.params'.ID]" level="INFO" doc:name="Logger"/>
+        <set-variable variableName="removeId" value="#[Integer.parseInt(message.inboundProperties.'http.uri.params'.ID)]" doc:name="Variable"/>
+        <choice doc:name="ExistBook">
+            <when expression="#[app.registry['books'].containsKey(flowVars.removeId)]">
+                <expression-component doc:name="Expression"><![CDATA[app.registry['books'].remove(flowVars.removeId))]]></expression-component>
+                <set-variable variableName="delete" value="{ message: Book with ID: #[flowVars.removeId] removed}" doc:name="Variable"/>
+                <logger message="delete book with ID: #[flowVars.removeId] by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="delete" value="{message: book with ID: #[flowVars.removeId] not exist}" doc:name="Not Found"/>
+                <logger message="fail attempt to delete book with ID: #[flowVars.removeId]  by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
+            </otherwise>
+        </choice>
+        <set-payload value="#[flowVars.delete]" doc:name="Set Payload"/>
+    </flow>
+    <flow name="get:/books/search/{NAME}:apikit-config">
+        <set-variable variableName="findName" value="#[message.inboundProperties.'http.uri.params'.NAME]" doc:name="Variable"/>
+        <set-variable variableName="find" value="{&quot;message&quot;: &quot;Book with title: #[flowVars.findName] not found&quot;}" doc:name="Variable"/>
+        <set-variable variableName="status" value="book not found" doc:name="setStatus"/>
+        <foreach collection="#[app.registry['books'].keySet()]" doc:name="For Each">
+            <choice doc:name="Choice">
+                <when expression="#[app.registry['books'].get(payload).getTitle().equals(flowVars.findName)]">
+                    <set-variable variableName="find" value="#[app.registry['books'].get(payload)]" doc:name="Variable"/>
+                    <set-variable variableName="status" value="successful search" doc:name="setStatus"/>
+                </when>
+                <otherwise>
+                    <set-variable variableName="tmp" value="tmp" doc:name="temp"/>
+                </otherwise>
+            </choice>
+        </foreach>
+        <set-payload value="#[flowVars.find]" doc:name="Set Payload"/>
+        <logger message="search book: #[flowVars.findName] by user:  #[message.inboundProperties.'user-agent']. status: #[flowVars.status]" level="INFO" doc:name="Logger"/>
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
     </flow>
 </mule>
