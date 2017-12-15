@@ -56,7 +56,12 @@ schemas:
     
     
 /books:
+  description: methods for management books
   get:
+    description: Retrieve all books
+    headers: 
+      User-Agent: 
+        required: true
     responses:
       200:
         body:
@@ -64,6 +69,10 @@ schemas:
             example: |
               [{"ID":1, "title": "book1","author": "author1", "pages": 12},{"ID":2, "title": "book2","author": "author2", "pages": 45},{"ID":1, "title": "book3","author": "author3", "pages": 25}]
   put:
+    description: Create a new book
+    headers: 
+      User-Agent: 
+        required: true
     body:
       application/json:  
         example: |
@@ -74,9 +83,13 @@ schemas:
         body:
           application/json:
             example: |
-              {"message": "Book added"}
+              {"message": "book created with id: 5"}
 
   post:
+    description: Update a new book
+    headers: 
+      User-Agent: 
+        required: true
     body:
       application/json:
         schema: book 
@@ -91,16 +104,27 @@ schemas:
               {"message": "Book updated"}
               
   /{NAME}:
+    description: methods for books management and that required parameter "name"
     get:
+      description: Search a specific book by name
+      headers: 
+        User-Agent: 
+          required: true
       responses:
         200:
           body:
             application/json:
+              schema: book
               example: |
                 {"ID":2, "title": "book2","author": "author2", "pages": 45}
   
   /{ID}:
+    description: methods for books management and that required parameter "ID"
     delete:
+      description: Delete a book by ID
+      headers: 
+        User-Agent: 
+          required: true    
       responses:
         200:
           body:

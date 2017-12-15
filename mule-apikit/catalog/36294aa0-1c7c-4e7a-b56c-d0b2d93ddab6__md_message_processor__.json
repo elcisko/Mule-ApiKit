@@ -1,0 +1,11 @@
+{
+    "inputMessageMetadata": {},
+    "outputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "Book"
+        }
+    },
+    "id": "36294aa0-1c7c-4e7a-b56c-d0b2d93ddab6",
+    "version": "5.2.0.0"
+}
