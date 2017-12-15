@@ -40,7 +40,6 @@ payload map ((payload01 , indexOfPayload01) -> {
         <logger message="getAllBooks by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
         <set-payload value="All: #[payload]" doc:name="Set Payload"/>
     </flow>
-<<<<<<< HEAD
     <flow name="put:/books:apikit-config">
         <dw:transform-message doc:name="Transform Message" metadata:id="36294aa0-1c7c-4e7a-b56c-d0b2d93ddab6">
             <dw:set-payload><![CDATA[%dw 1.0
@@ -121,37 +120,5 @@ payload map ((payload01 , indexOfPayload01) -> {
         <set-payload value="#[flowVars.find]" doc:name="Set Payload"/>
         <logger message="search book: #[flowVars.findName] by user:  #[message.inboundProperties.'user-agent']. status: #[flowVars.status]" level="INFO" doc:name="Logger"/>
         <json:object-to-json-transformer doc:name="Object to JSON"/>
-=======
-    <flow name="put:/books:exercise-apikit">
-        <dw:transform-message doc:name="Transform Message" metadata:id="36294aa0-1c7c-4e7a-b56c-d0b2d93ddab6">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/java
----
-{
-	title: payload.title,
-	author: payload.author,
-	pages: payload.pages as :number
-} as :object {
-	class : "com.mule.support.Book"
-}]]></dw:set-payload>
-        </dw:transform-message>
-        <expression-component doc:name="Expression"><![CDATA[app.registry['books'].put(payload.getId(),payload);]]></expression-component>
-        <logger message="created new book with ID: #[payload.getId()] by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
-        <set-payload value="{ message: book created with id: #[payload.id]}" doc:name="Set Payload"/>
-    </flow>
-    <flow name="delete:/books/{ID}:exercise-apikit">
-        <set-variable variableName="removeId" value="#[Integer.parseInt(message.inboundProperties.'http.uri.params'.ID)]" doc:name="Variable"/>
-        <choice doc:name="ExistBook">
-            <when expression="">
-                <expression-component doc:name="Expression"><![CDATA[app.registry['books'].remove(flowVars.removeId))]]></expression-component>
-                <set-variable variableName="delete" value="Book with ID: #[flowVars.removeId] removed" doc:name="Variable"/>
-                <logger message="delete book with ID: #[flowVars.removeId] by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
-            </when>
-            <otherwise>
-                <set-variable variableName="delete" value="book with ID: #[flowVars.removeId] not exist" doc:name="Not Found"/>
-                <logger message="fail attempt to delete book with ID: #[flowVars.removeId]  by user:  #[message.inboundProperties.'user-agent']" level="INFO" doc:name="Logger"/>
-            </otherwise>
-        </choice>
->>>>>>> branch 'master' of https://github.com/elcisko/Mule-ApiKit.git
     </flow>
 </mule>
