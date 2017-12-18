@@ -18,6 +18,7 @@ http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/jso
     <flow name="main-apikitFlow">
         <http:listener config-ref="APIKIT_Listener_Configuration" path="/api/*" doc:name="HTTP"/>
         <apikit:router config-ref="apikit-config" doc:name="APIkit Router"/>
+        <exception-strategy ref="globalExceptions" doc:name="Reference Exception Strategy"/>
     </flow>
     <flow name="console-apikitFlow">
         <http:listener config-ref="APIKIT_Listener_Configuration" path="/console/*" doc:name="HTTP"/>
@@ -121,4 +122,26 @@ payload map ((payload01 , indexOfPayload01) -> {
         <logger message="search book: #[flowVars.findName] by user:  #[message.inboundProperties.'user-agent']. status: #[flowVars.status]" level="INFO" doc:name="Logger"/>
         <json:object-to-json-transformer doc:name="Object to JSON"/>
     </flow>
+    <apikit:mapping-exception-strategy name="globalExceptions">
+        <apikit:mapping statusCode="400">
+            <apikit:exception value="org.mule.module.apikit.exception.BadRequestException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Bad request&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="404">
+            <apikit:exception value="org.mule.module.apikit.exception.NotFoundException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Resource not found&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="405">
+            <apikit:exception value="org.mule.module.apikit.exception.MethodNotAllowedException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Method not allowed&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+        <apikit:mapping statusCode="406">
+            <apikit:exception value="org.mule.module.apikit.exception.NotAcceptableException" />
+            <set-property propertyName="Content-Type" value="application/json" doc:name="Property"/>
+            <set-payload value="{ &quot;message&quot;: &quot;Not acceptable&quot; }" doc:name="Set Payload"/>
+        </apikit:mapping>
+    </apikit:mapping-exception-strategy>
 </mule>
